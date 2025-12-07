@@ -1,0 +1,255 @@
+---
+title: "Project C"
+output: html_notebook
+---
+
+```{r}
+library(readxl)
+library(dplyr)
+library(tidyr)
+```
+
+```{r}
+pew_2019 = read_excel("2019/Pew Research Center Global Attitudes Spring 2019 Dataset WEB.xlsx")
+pew_2024 = read.csv("2024/Pew Research Center Global Attitudes Spring 2024 Dataset CSV.csv")
+pew_2019 = pew_2019[-1, ] ## Removes the extra header row
+```
+
+```{r}
+mergeable_2019 = data.frame(id = 1:38426,
+                            year = 2019)
+num = 38427 + 41503 - 1
+mergeable_2024 = data.frame(id = 38427:num,
+                            year = 2024)
+```
+
+
+```{r}
+country_codes_2024 = data.frame(
+  id = 1:36,
+  country = c(
+    "United States", "Canada", "France", "Germany", "Greece", "Hungary", "Italy",
+    "Netherlands", "Poland", "Spain", "Sweden", "United Kingdom", "Australia",
+    "Bangladesh", "India", "Indonesia", "Japan", "Malaysia", "Philippines",
+    "Singapore", "South Korea", "Sri Lanka", "Thailand", "Israel", "Tunisia",
+    "Turkey", "Ghana", "Kenya", "Nigeria", "South Africa", "Argentina",
+    "Brazil", "Chile", "Colombia", "Mexico", "Peru"))
+
+country_codes_2019 = data.frame(
+  id = 1:34,
+  country = c(
+    "Argentina", "Australia", "Brazil", "Bulgaria", "Canada",
+    "Czech Republic", "France", "Germany", "Greece", "Hungary",
+    "India", "Indonesia", "Israel", "Italy", "Japan",
+    "Kenya", "Lebanon", "Lithuania", "Mexico", "Netherlands",
+    "Nigeria", "Philippines", "Poland", "Russia", "Slovakia",
+    "South Africa", "South Korea", "Spain", "Sweden", "Tunisia",
+    "Turkey", "Ukraine", "United Kingdom", "United States"))
+```
+
+```{r}
+mergeable_2019$`country` = country_codes_2019$country[match(pew_2019$country, country_codes_2019$id)]
+mergeable_2024$`country` = country_codes_2024$country[match(pew_2024$country, country_codes_2024$id)]
+```
+
+```{r}
+head(mergeable_2019)
+head(mergeable_2024)
+```
+
+```{r}
+mergeable_2024$econ_sit = pew_2024$econ_sit
+mergeable_2024$`Economic Satisfaction` = recode(mergeable_2024$econ_sit,
+                      `1`  = 'Very good',
+                      `2`  = 'Somewhat good',
+                      `3` = 'Somewhat bad',
+                      `4` = 'Very bad',
+                      `8` = "Don't know",
+                      `9` = 'Refused')
+
+head(mergeable_2024)
+```
+
+```{r}
+mergeable_2019$econ_sit = pew_2019$ECON_SIT
+mergeable_2019$`Economic Satisfaction` = recode(mergeable_2019$econ_sit,
+                      `1`  = 'Very good',
+                      `2`  = 'Somewhat good',
+                      `3` = 'Somewhat bad',
+                      `4` = 'Very bad',
+                      `8` = "Don't know",
+                      `9` = 'Refused')
+
+head(mergeable_2019)
+```
+
+```{r}
+mergeable_2024$children_betteroff = pew_2024$children_betteroff
+mergeable_2024$`Children Betteroff` = recode(mergeable_2024$children_betteroff,
+                      `1` = 'Better off',
+                      `2` = 'Worse off',
+                      `3` = 'Same',
+                      `8` = "Don't know",
+                      `9` = 'Refused')
+
+head(mergeable_2024)
+```
+
+```{r}
+mergeable_2019$children_betteroff = pew_2019$CHILDREN_BETTEROFF2
+mergeable_2019$`Children Betteroff` = recode(mergeable_2019$children_betteroff,
+                      `1` = 'Better off',
+                      `2` = 'Worse off',
+                      `3` = 'Same',
+                      `8` = "Don't know",
+                      `9` = 'Refused')
+
+head(mergeable_2019)
+```
+
+
+```{r}
+mergeable_2024$satisfied_democracy = pew_2024$satisfied_democracy
+mergeable_2024$`Democracy Satisfaction` = recode(mergeable_2024$satisfied_democracy,
+                      `1` = 'Very satisfied',
+                      `2` = 'Somewhat satisfied',
+                      `3` = 'Not too satisfied',
+                      `4` = 'Not at all satisfied',
+                      `8` = "Don't know",
+                      `9` = 'Refused')
+
+head(mergeable_2024)
+```
+
+```{r}
+mergeable_2019$satisfied_democracy = pew_2019$SATISFIED_DEMOCRACY
+mergeable_2019$`Democracy Satisfaction` = recode(mergeable_2019$satisfied_democracy,
+                      `1` = 'Very satisfied',
+                      `2` = 'Somewhat satisfied',
+                      `3` = 'Not too satisfied',
+                      `4` = 'Not at all satisfied',
+                      `8` = 'Don’t know',
+                      `9` = 'Refused')
+
+head(mergeable_2019)
+```
+
+```{r}
+mergeable_2019$age = ifelse(pew_2019$AGE == 99, 'Refused',
+                            ifelse(pew_2019$AGE == 98, "Don't know",
+                                   ifelse(pew_2019$AGE == 97, 'Over 97',
+                                          pew_2019$AGE)))
+
+mergeable_2024$age = ifelse(
+  mergeable_2024$country == "Australia",
+  
+  # --- Australia age variable ---
+  ifelse(pew_2024$d_age_australia == 99, "Refused",
+  ifelse(pew_2024$d_age_australia == 98, "Don't know",
+  ifelse(pew_2024$d_age_australia == 97, "Over 97",
+         pew_2024$d_age_australia))),
+  
+  # --- Non-Australia age variable ---
+  ifelse(pew_2024$age == 99, "Refused",
+  ifelse(pew_2024$age == 98, "Don't know",
+  ifelse(pew_2024$age == 97, "Over 97",
+         pew_2024$age)))
+)
+
+mergeable_2019$gender = ifelse(pew_2019$SEX == 1, 'Male', 'Female')
+mergeable_2024$gender = ifelse(pew_2024$gender == 1, 'Male', 'Female')
+
+mergeable_2024$gender = ifelse(
+  mergeable_2024$country == "Australia",
+  
+  # --- Australia age variable ---
+  ifelse(pew_2024$gender_australia == 99, "Refused",
+  ifelse(pew_2024$gender_australia == 98, "Don't know",
+  ifelse(pew_2024$gender_australia == 1, 'Male', 'Female'))),
+  
+  # --- Non-Australia age variable ---
+  ifelse(pew_2024$gender == 99, "Refused",
+  ifelse(pew_2024$gender == 98, "Don't know",
+  ifelse(pew_2024$gender == 1, 'Male', 'Female')))
+)
+```
+
+
+```{r}
+mergeable_2019$`Number of People in Household` = ifelse(pew_2019$D_HHPEOPLE == 98, "Don't know",
+                        ifelse(pew_2019$D_HHPEOPLE == 99, "Refused", pew_2019$D_HHPEOPLE))
+
+mergeable_2024$`Number of People in Household` = ifelse(pew_2024$hhpeople == 98, "Don't know",
+                        ifelse(pew_2024$hhpeople == 99, "Refused", pew_2024$hhpeople))
+```
+
+```{r}
+head(mergeable_2019)
+```
+
+```{r}
+head(mergeable_2024)
+```
+
+```{r}
+nrow(mergeable_2024 %>% filter(is.na(`Democracy Satisfaction`)))
+```
+
+
+```{r}
+merged_dataset = rbind(mergeable_2019, mergeable_2024)
+
+write.csv(merged_dataset, "2019 and 2024 PEW Global Attitudes Survey.csv", row.names = FALSE)
+```
+
+```{r}
+summary_dataset = merged_dataset %>%
+  group_by(country, year) %>%
+  summarise(
+    democracy_very_satisfied        = mean(`Democracy Satisfaction` == "Very satisfied") * 100,
+    democracy_somewhat_satisfied    = mean(`Democracy Satisfaction` == "Somewhat satisfied") * 100,
+    democracy_not_satisfied         = mean(`Democracy Satisfaction` == "Not too satisfied") * 100,
+    democracy_not_at_all_satisfied  = mean(`Democracy Satisfaction` == "Not at all satisfied") * 100,
+    democracy_satisfied  = mean(`Democracy Satisfaction` == "Somewhat satisfied" | `Democracy Satisfaction` == "Very satisfied") * 100,
+    
+    economy_very_good        = mean(`Economic Satisfaction` == "Very good") * 100,
+    economy_somewhat_good    = mean(`Economic Satisfaction` == "Somewhat good") * 100,
+    economy_somewhat_bad         = mean(`Economic Satisfaction` == "Somewhat bad") * 100,
+    economy_very_bad  = mean(`Economic Satisfaction` == "Very bad") * 100,
+    economy_good  = mean(`Economic Satisfaction` == "Somewhat good" | `Economic Satisfaction` == "Very good") * 100,
+    
+    children_better        = mean(`Children Betteroff` == "Better off") * 100,
+    children_worse    = mean(`Children Betteroff` == "Worse off") * 100,
+    children_same         = mean(`Children Betteroff` == "Same") * 100,
+  ) %>%
+  arrange(country, year)
+  
+
+head(summary_dataset)
+```
+
+```{r}
+write.csv(summary_dataset, "Summary Dataset with year.csv", row.names = FALSE)
+```
+
+```{r}
+pivot_summary_dataset = summary_dataset %>%
+  pivot_longer(
+    cols = matches("^(democracy_|economy_)"),
+    names_to = "percentage_type",
+    values_to = "percent_value"
+  ) %>% 
+  select(country, year, percentage_type, percent_value)
+
+head(pivot_summary_dataset)
+```
+
+```{r}
+write.csv(pivot_summary_dataset, "Summary Dataset Pivot.csv", row.names = FALSE)
+```
+
+
+
+
+
+
